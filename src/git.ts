@@ -57,19 +57,7 @@ export async function init(action: ActionInterface): Promise<void | Error> {
       action.silent
     )
 
-      if (action.preserve) {
-        info(`Stashing workspace changes…`)
-        await execute(`git stash`, action.workspace, action.silent)
-      }
-
-      await execute(
-        `git fetch --no-recurse-submodules`,
-        action.workspace,
-        action.silent
-      )
-
-      info('Git configured… 🔧')
-    }
+    info('Git configured… 🔧')
   } catch (error) {
     throw new Error(
       `There was an error initializing the repository: ${suppressSensitiveInformation(

@@ -32,7 +32,7 @@ export interface ActionInterface {
     /** The fully qualified repositpory path, this gets auto generated if repositoryName is provided. */
     repositoryPath?: string;
     /** The root directory where your project lives. */
-    root?: string;
+    root: string;
     /** Wipes the commit history from the deployment branch in favor of a single commit. */
     singleCommit?: boolean | null;
     /** Determines if the action should run in silent mode or not. */
@@ -47,6 +47,7 @@ export interface ActionInterface {
     workspace: string;
 }
 export declare const action: ActionInterface;
+export declare type ActionFolders = NonNullable<Pick<ActionInterface, 'folder' | 'root'>>;
 /** Status codes for the action. */
 export declare enum Status {
     SUCCESS = "success",
