@@ -17,16 +17,16 @@
     <img src="https://github.com/JamesIves/github-pages-deploy-action/workflows/integration-tests/badge.svg">
   </a>
   
-  <a href="https://github.com/marketplace/actions/deploy-to-github-pages">
-    <img src="https://img.shields.io/badge/action-marketplace-blue.svg?logo=github&color=orange">
+  <a href="https://codecov.io/gh/JamesIves/github-pages-deploy-action/branch/dev">
+    <img src="https://codecov.io/gh/JamesIves/github-pages-deploy-action/branch/dev/graph/badge.svg">
   </a>
   
   <a href="https://github.com/JamesIves/github-pages-deploy-action/releases">
     <img src="https://img.shields.io/github/v/release/JamesIves/github-pages-deploy-action.svg?logo=github">
   </a>
   
-  <a href="https://codecov.io/gh/JamesIves/github-pages-deploy-action/branch/dev">
-    <img src="https://codecov.io/gh/JamesIves/github-pages-deploy-action/branch/dev/graph/badge.svg">
+  <a href="https://github.com/marketplace/actions/deploy-to-github-pages">
+    <img src="https://img.shields.io/badge/action-marketplace-blue.svg?logo=github&color=orange">
   </a>
 </p>
 
@@ -62,7 +62,7 @@ jobs:
           npm run build
 
       - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@3.6.1
+        uses: JamesIves/github-pages-deploy-action@3.6.2
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages # The branch the action should deploy to.
@@ -83,10 +83,14 @@ It's recommended that you use [Dependabot](https://dependabot.com/github-actions
 
 #### Install as a Node Module 📦
 
-If you'd like to use the functionality provided by this action in your own action you can install it using [yarn](https://yarnpkg.com/) by running the following command.
+If you'd like to use the functionality provided by this action in your own action you can install it using [yarn](https://yarnpkg.com/) or [npm](https://www.npmjs.com/get-npm) by running the following commands. It's available on both the [npm](https://www.npmjs.com/package/@jamesives/github-pages-deploy-action) and [GitHub registry](https://github.com/JamesIves/github-pages-deploy-action/packages/229985). 
 
 ```
 yarn add @jamesives/github-pages-deploy-action
+```
+
+```
+npm install @jamesives/github-pages-deploy-action
 ```
 
 It can then be imported into your project like so.
@@ -114,7 +118,7 @@ run({
 });
 ```
 
-For more information regarding the [action interface please click here](https://github.com/JamesIves/github-pages-deploy-action/blob/dev/src/constants.ts#L7). You can find the npm registry listing for the module [here](https://www.npmjs.com/package/@jamesives/github-pages-deploy-action), and the GitHub registry listing [here](https://github.com/JamesIves/github-pages-deploy-action/packages/229985).
+For more information regarding the [action interface please click here](https://github.com/JamesIves/github-pages-deploy-action/blob/dev/src/constants.ts#L7).
 
 ## Configuration 📁
 
@@ -188,7 +192,7 @@ With this configured you must add the `ssh-agent` step to your workflow and set 
     ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
 - name: Deploy 🚀
-  uses: JamesIves/github-pages-deploy-action@3.6.1
+  uses: JamesIves/github-pages-deploy-action@3.6.2
   with:
     SSH: true
     BRANCH: gh-pages
@@ -224,7 +228,7 @@ jobs:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@3.6.1
+        uses: JamesIves/github-pages-deploy-action@3.6.2
         with:
           BASE_BRANCH: master
           BRANCH: gh-pages
@@ -291,7 +295,7 @@ jobs:
           name: site
 
       - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@3.6.1
+        uses: JamesIves/github-pages-deploy-action@3.6.2
         with:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           BRANCH: gh-pages
@@ -313,7 +317,7 @@ If you use a [container](https://help.github.com/en/actions/automating-your-work
     apt-get update && apt-get install -y rsync
 
 - name: Deploy 🚀
-  uses: JamesIves/github-pages-deploy-action@3.6.1
+  uses: JamesIves/github-pages-deploy-action@3.6.2
 ```
 
 ---

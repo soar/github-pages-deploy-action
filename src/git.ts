@@ -4,6 +4,7 @@ import fs from 'fs'
 import {ActionInterface, Status} from './constants'
 import {execute} from './execute'
 import {
+  generateFolderPath,
   hasRequiredParameters,
   isNullOrUndefined,
   suppressSensitiveInformation
@@ -31,8 +32,12 @@ export async function init(action: ActionInterface): Promise<void | Error> {
 
     try {
       await execute(`git remote rm origin`, action.workspace, action.silent)
+
+      if (action.isTest) {
+        throw new Error()
+      }
     } catch {
-      info('Unable to remove origin, skipping…')
+      info('Attempted to remove origin but failed, continuing…')
     }
 
     await execute(
@@ -43,7 +48,7 @@ export async function init(action: ActionInterface): Promise<void | Error> {
 
     if (action.preserve) {
       info(`Stashing workspace changes… ⬆️`)
-      await execute(`git stash`, action.workspace, action.silent);
+      await execute(`git stash`, action.workspace, action.silent)
     }
 
     await execute(
@@ -138,6 +143,8 @@ export async function generateBranch(action: ActionInterface): Promise<void> {
 
 /* Runs the necessary steps to make the deployment. */
 export async function deploy(action: ActionInterface): Promise<Status> {
+  const folderPath = generateFolderPath(action, 'folder')
+  const rootPath = generateFolderPath(action, 'root')
   const temporaryDeploymentDirectory =
     'github-pages-deploy-action-temp-deployment-folder'
   const temporaryDeploymentBranch = `github-pages-deploy-action/${Math.random()
@@ -188,6 +195,20 @@ export async function deploy(action: ActionInterface): Promise<Status> {
       )
     }
 
+    if (action.preserve) {
+      info(`Applying stashed workspace changes… ⬆️`)
+
+      try {
+        await execute(`git stash apply`, action.workspace, action.silent)
+
+        if (action.isTest) {
+          throw new Error()
+        }
+      } catch {
+        info('Unable to apply from stash, continuing…')
+      }
+    }
+
     await execute(
       `git worktree add --checkout ${temporaryDeploymentDirectory} origin/${action.branch}`,
       action.workspace,
@@ -233,22 +254,22 @@ export async function deploy(action: ActionInterface): Promise<Status> {
       Allows the user to specify the root if '.' is provided.
       rsync is used to prevent file duplication. */
     await execute(
-      `rsync -q -av --checksum --progress ${action.folder}/. ${
+      `rsync -q -av --checksum --progress ${folderPath}/. ${
         action.targetFolder
           ? `${temporaryDeploymentDirectory}/${action.targetFolder}`
           : temporaryDeploymentDirectory
       } ${
         action.clean
           ? `--delete ${excludes} ${
-              !fs.existsSync(`${action.folder}/CNAME`) ? '--exclude CNAME' : ''
+              !fs.existsSync(`${folderPath}/CNAME`) ? '--exclude CNAME' : ''
             } ${
-              !fs.existsSync(`${action.folder}/.nojekyll`)
+              !fs.existsSync(`${folderPath}/.nojekyll`)
                 ? '--exclude .nojekyll'
                 : ''
             }`
           : ''
       }  --exclude .ssh --exclude .git --exclude .github ${
-        action.folder === action.root
+        folderPath === rootPath
           ? `--exclude ${temporaryDeploymentDirectory}`
           : ''
       }`,

@@ -178,51 +178,6 @@ describe('git', () => {
       }
     })
 
-    it('should fail if the build folder begins with a /', async () => {
-      Object.assign(action, {
-        silent: false,
-        accessToken: '123',
-        repositoryPath: 'JamesIves/github-pages-deploy-action',
-        branch: 'branch',
-        folder: '/',
-        pusher: {
-          name: 'asd',
-          email: 'as@cat'
-        }
-      })
-
-      try {
-        await init(action)
-      } catch (e) {
-        expect(execute).toBeCalledTimes(0)
-        expect(e.message).toMatch(
-          "There was an error initializing the repository: Incorrectly formatted build folder. The deployment folder cannot be prefixed with '/' or './'. Instead reference the folder name directly. ❌"
-        )
-      }
-    })
-
-    it('should fail if the build folder begins with a ./', async () => {
-      Object.assign(action, {
-        silent: false,
-        accessToken: '123',
-        branch: 'branch',
-        folder: './',
-        pusher: {
-          name: 'asd',
-          email: 'as@cat'
-        }
-      })
-
-      try {
-        await init(action)
-      } catch (e) {
-        expect(execute).toBeCalledTimes(0)
-        expect(e.message).toMatch(
-          "There was an error initializing the repository: Incorrectly formatted build folder. The deployment folder cannot be prefixed with '/' or './'. Instead reference the folder name directly. ❌"
-        )
-      }
-    })
-
     it('should not fail if root is used', async () => {
       Object.assign(action, {
         silent: false,
@@ -240,6 +195,26 @@ describe('git', () => {
       await init(action)
 
       expect(execute).toBeCalledTimes(6)
+    })
+
+    it('should stash changes if preserve is true', async () => {
+      Object.assign(action, {
+        silent: false,
+        repositoryPath: 'JamesIves/github-pages-deploy-action',
+        accessToken: '123',
+        branch: 'branch',
+        folder: '.',
+        preserve: true,
+        isTest: true,
+        pusher: {
+          name: 'asd',
+          email: 'as@cat'
+        }
+      })
+
+      await init(action)
+
+      expect(execute).toBeCalledTimes(7)
     })
   })
 
@@ -360,6 +335,29 @@ describe('git', () => {
 
       // Includes the call to generateBranch
       expect(execute).toBeCalledTimes(13)
+      expect(rmRF).toBeCalledTimes(1)
+      expect(response).toBe(Status.SUCCESS)
+    })
+
+    it('should execute stash apply commands if preserve is true', async () => {
+      Object.assign(action, {
+        silent: false,
+        folder: 'assets',
+        branch: 'branch',
+        gitHubToken: '123',
+        lfs: true,
+        preserve: true,
+        isTest: true,
+        pusher: {
+          name: 'asd',
+          email: 'as@cat'
+        }
+      })
+
+      const response = await deploy(action)
+
+      // Includes the call to generateBranch
+      expect(execute).toBeCalledTimes(14)
       expect(rmRF).toBeCalledTimes(1)
       expect(response).toBe(Status.SUCCESS)
     })
