@@ -96,12 +96,7 @@ npm install @jamesives/github-pages-deploy-action
 It can then be imported into your project like so.
 
 ```javascript
-import run, {
-  init,
-  deploy,
-  generateBranch,
-  ActionInterface
-} from "github-pages-deploy-action";
+import run, {ActionInterface} from "github-pages-deploy-action";
 ```
 
 Calling the functions directly will require you to pass in an object containing the variables found in the configuration section, you'll also need to provide a `workspace` with a path to your project.
@@ -178,7 +173,7 @@ The action will export an environment variable called `DEPLOYMENT_STATUS` that y
 If you'd prefer to use an SSH deploy key as opposed to a token you must first generate a new SSH key by running the following terminal command, replacing the email with one connected to your GitHub account.
 
 ```bash
-ssh-keygen -t rsa -b 4096 -C "youremailhere@example.com" -N ""
+ssh-keygen -t rsa -m pem -b 4096 -C "youremailhere@example.com" -N ""
 ```
 
 Once you've generated the key pair you must add the contents of the public key within your repository's [deploy keys menu](https://developer.github.com/v3/guides/managing-deploy-keys/). You can find this option by going to `Settings > Deploy Keys`, you can name the public key whatever you want, but you **do** need to give it write access. Afterwards add the contents of the private key to the `Settings > Secrets` menu as `DEPLOY_KEY`.
@@ -187,7 +182,7 @@ With this configured you must add the `ssh-agent` step to your workflow and set 
 
 ```yml
 - name: Install SSH Client 🔑
-  uses: webfactory/ssh-agent@v0.2.0
+  uses: webfactory/ssh-agent@v0.4.1
   with:
     ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
@@ -333,3 +328,15 @@ If you wish to remove these files you must go into the deployment branch directl
 ### Debugging 🐝
 
 If you'd like to enable action debugging you can set the `ACTIONS_STEP_DEBUG` environment variable to true within the [Settings/Secrets](https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets#creating-encrypted-secrets) menu.  If you're using this action in your own project as a node module via yarn or npm **you may expose your secrets if you toggle this on in a production environment**. You can learn more about debugging GitHub actions [here](https://github.com/actions/toolkit/blob/master/docs/action-debugging.md).
+
+---
+
+## Support 💖
+
+This project would not be possible without all of our fantastic [contributors](https://github.com/JamesIves/github-pages-deploy-action/graphs/contributors).
+
+<a href="https://github.com/JamesIves/github-pages-deploy-action/graphs/contributors">
+  <img src="https://contributors-img.web.app/image?repo=JamesIves/github-pages-deploy-action" />
+</a>
+
+If you'd like to support the maintenance and upkeep of this project you can [donate via GitHub Sponsors](https://github.com/sponsors/JamesIves). This project is distributed under the [MIT](https://github.com/JamesIves/github-pages-deploy-action/blob/dev/LICENSE) license.
