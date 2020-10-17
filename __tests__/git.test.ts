@@ -23,6 +23,7 @@ jest.mock('@actions/io', () => ({
 }))
 
 jest.mock('../src/execute', () => ({
+  __esModule: true,
   execute: jest.fn()
 }))
 
@@ -50,6 +51,34 @@ describe('git', () => {
       await init(action)
       expect(execute).toBeCalledTimes(7)
     })
+
+    it('should catch when a function throws an error', async () => {
+      ;(execute as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('Mocked throw')
+      })
+
+      Object.assign(action, {
+        silent: false,
+        repositoryPath: 'JamesIves/github-pages-deploy-action',
+        accessToken: '123',
+        branch: 'branch',
+        folder: '.',
+        preserve: true,
+        isTest: true,
+        pusher: {
+          name: 'asd',
+          email: 'as@cat'
+        }
+      })
+
+      try {
+        await init(action)
+      } catch (error) {
+        expect(error.message).toBe(
+          'There was an error initializing the repository: Mocked throw ❌'
+        )
+      }
+    })
   })
 
   describe('generateBranch', () => {
@@ -67,6 +96,31 @@ describe('git', () => {
 
       await generateBranch(action)
       expect(execute).toBeCalledTimes(6)
+    })
+
+    it('should catch when a function throws an error', async () => {
+      ;(execute as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('Mocked throw')
+      })
+
+      Object.assign(action, {
+        silent: false,
+        accessToken: '123',
+        branch: 'branch',
+        folder: '.',
+        pusher: {
+          name: 'asd',
+          email: 'as@cat'
+        }
+      })
+
+      try {
+        await generateBranch(action)
+      } catch (error) {
+        expect(error.message).toBe(
+          'There was an error creating the deployment branch: There was an error switching to the base branch: Mocked throw ❌ ❌'
+        )
+      }
     })
   })
 
@@ -103,6 +157,32 @@ describe('git', () => {
       await switchToBaseBranch(action)
       expect(execute).toBeCalledTimes(1)
     })
+
+    it('should catch when a function throws an error', async () => {
+      ;(execute as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('Mocked throw')
+      })
+
+      Object.assign(action, {
+        silent: false,
+        baseBranch: '123',
+        accessToken: '123',
+        branch: 'branch',
+        folder: '.',
+        pusher: {
+          name: 'asd',
+          email: 'as@cat'
+        }
+      })
+
+      try {
+        await switchToBaseBranch(action)
+      } catch (error) {
+        expect(error.message).toBe(
+          'There was an error switching to the base branch: Mocked throw ❌'
+        )
+      }
+    })
   })
 
   describe('deploy', () => {
@@ -131,6 +211,7 @@ describe('git', () => {
       Object.assign(action, {
         silent: false,
         folder: 'assets',
+        folderPath: 'assets',
         branch: 'branch',
         gitHubToken: '123',
         lfs: true,
@@ -150,26 +231,33 @@ describe('git', () => {
       expect(response).toBe(Status.SUCCESS)
     })
 
-    it('should not ignore CNAME or nojekyll if they exist in the deployment folder', async () => {
+    it('should appropriately move along if git stash errors', async () => {
+      ;(execute as jest.Mock).mockImplementation(cmd => {
+        if (cmd === 'git stash apply') {
+          // Mocks the case where git stash apply errors.
+          throw new Error()
+        }
+      })
+
       Object.assign(action, {
         silent: false,
         folder: 'assets',
+        folderPath: 'assets',
         branch: 'branch',
         gitHubToken: '123',
+        lfs: true,
+        preserve: true,
+        isTest: true,
         pusher: {
           name: 'asd',
           email: 'as@cat'
-        },
-        clean: true
+        }
       })
 
       const response = await deploy(action)
 
-      fs.createWriteStream('assets/.nojekyll')
-      fs.createWriteStream('assets/CNAME')
-
       // Includes the call to generateBranch
-      expect(execute).toBeCalledTimes(12)
+      expect(execute).toBeCalledTimes(14)
       expect(rmRF).toBeCalledTimes(1)
       expect(response).toBe(Status.SUCCESS)
     })
@@ -177,14 +265,16 @@ describe('git', () => {
     it('should execute commands with single commit toggled', async () => {
       Object.assign(action, {
         silent: false,
-        folder: 'assets',
+        folder: 'other',
+        folderPath: 'other',
         branch: 'branch',
         gitHubToken: '123',
         singleCommit: true,
         pusher: {
           name: 'asd',
           email: 'as@cat'
-        }
+        },
+        clean: true
       })
 
       await deploy(action)
@@ -194,11 +284,37 @@ describe('git', () => {
       expect(rmRF).toBeCalledTimes(1)
     })
 
+    it('should not ignore CNAME or nojekyll if they exist in the deployment folder', async () => {
+      Object.assign(action, {
+        silent: false,
+        folder: 'assets',
+        folderPath: 'assets',
+        branch: 'branch',
+        gitHubToken: '123',
+        pusher: {
+          name: 'asd',
+          email: 'as@cat'
+        },
+        clean: true
+      })
+
+      fs.createWriteStream('assets/.nojekyll')
+      fs.createWriteStream('assets/CNAME')
+
+      const response = await deploy(action)
+
+      // Includes the call to generateBranch
+      expect(execute).toBeCalledTimes(12)
+      expect(rmRF).toBeCalledTimes(1)
+      expect(response).toBe(Status.SUCCESS)
+    })
+
     it('should execute commands with clean options, ommits sha commit message', async () => {
       process.env.GITHUB_SHA = ''
       Object.assign(action, {
         silent: false,
-        folder: 'assets',
+        folder: 'other',
+        folderPath: 'other',
         branch: 'branch',
         gitHubToken: '123',
         pusher: {
@@ -206,7 +322,8 @@ describe('git', () => {
           email: 'as@cat'
         },
         clean: true,
-        cleanExclude: '["cat", "montezuma"]'
+        cleanExclude: '["cat", "montezuma"]',
+        workspace: 'other'
       })
 
       await deploy(action)
@@ -220,6 +337,7 @@ describe('git', () => {
       Object.assign(action, {
         silent: false,
         folder: 'assets',
+        folderPath: 'assets',
         branch: 'branch',
         gitHubToken: '123',
         pusher: {
@@ -275,6 +393,32 @@ describe('git', () => {
       expect(execute).toBeCalledTimes(13)
       expect(rmRF).toBeCalledTimes(1)
       expect(response).toBe(Status.SKIPPED)
+    })
+
+    it('should catch when a function throws an error', async () => {
+      ;(execute as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('Mocked throw')
+      })
+
+      Object.assign(action, {
+        silent: false,
+        folder: 'assets',
+        branch: 'branch',
+        gitHubToken: '123',
+        lfs: true,
+        pusher: {
+          name: 'asd',
+          email: 'as@cat'
+        }
+      })
+
+      try {
+        await deploy(action)
+      } catch (error) {
+        expect(error.message).toBe(
+          'The deploy step encountered an error: Mocked throw ❌'
+        )
+      }
     })
   })
 })
